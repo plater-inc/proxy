@@ -1,0 +1,103 @@
+cc_library(
+    name = "body_with_length_parser",
+    srcs = [
+        "body_with_length_parser.cpp",
+    ],
+    hdrs = [
+        "body_with_length_parser.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)
+
+cc_library(
+    name = "body_length_detector",
+    srcs = [
+        "body_length_detector.cpp",
+    ],
+    hdrs = [
+        "body_length_detector.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/http:body_length_representation",
+        "//proxy/http:header",
+        "//proxy/util:misc_strings",
+        "//proxy/util:utils",
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)
+
+cc_library(
+    name = "body_without_length_parser",
+    srcs = [
+        "body_without_length_parser.cpp",
+    ],
+    hdrs = [
+        "body_without_length_parser.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":chunk_parser",
+        "//proxy/http:chunk",
+        "//proxy/http:trailer",
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)
+
+cc_library(
+    name = "chunk_parser",
+    srcs = [
+        "chunk_parser.cpp",
+    ],
+    hdrs = [
+        "chunk_parser.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/http:chunk",
+        "//proxy/http:trailer",
+        "//proxy/util:misc_strings",
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)
+
+cc_library(
+    name = "request_pre_body_parser",
+    srcs = [
+        "request_pre_body_parser.cpp",
+    ],
+    hdrs = [
+        "request_pre_body_parser.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/http:request_pre_body",
+        "//proxy/util:misc_strings",
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)
+
+cc_library(
+    name = "response_pre_body_parser",
+    srcs = [
+        "response_pre_body_parser.cpp",
+    ],
+    hdrs = [
+        "response_pre_body_parser.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/http:response_pre_body",
+        "//proxy/util:misc_strings",
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)

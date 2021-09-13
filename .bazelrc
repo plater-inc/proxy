@@ -1,0 +1,9 @@
+build --crosstool_top=@llvm_toolchain//:toolchain --cxxopt="-std=c++20"
+build:debug -c dbg
+build:debug --copt="-g"
+#build:debug --copt="-DBOOST_ASIO_ENABLE_HANDLER_TRACKING"
+build:debug --strip="never"
+test --crosstool_top=@llvm_toolchain//:toolchain --cxxopt="-std=c++20"
+test:debug -c dbg
+test:debug --copt="-g"
+test:debug --strip="never"

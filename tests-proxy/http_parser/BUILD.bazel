@@ -1,0 +1,35 @@
+cc_test(
+    name = "request_pre_body_parser_test",
+    srcs = [
+        "request_pre_body_parser_test.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/http_parser:request_pre_body_parser",
+        "//proxy/util:utils",
+    ],
+)
+
+cc_test(
+    name = "response_pre_body_parser_test",
+    srcs = [
+        "response_pre_body_parser_test.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/http_parser:response_pre_body_parser",
+        "//proxy/util:utils",
+    ],
+)
+
+cc_test(
+    name = "chunk_parser_test",
+    srcs = [
+        "chunk_parser_test.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/http_parser:chunk_parser",
+        "//proxy/util:utils",
+    ],
+)

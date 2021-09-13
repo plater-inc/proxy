@@ -1,0 +1,26 @@
+package(default_visibility = ["//tests-proxy:__subpackages__"])
+
+py_library(
+    name = "proxy",
+    srcs = ["proxy.py"],
+)
+
+py_library(
+    name = "runner",
+    srcs = ["runner.py"],
+)
+
+py_library(
+    name = "thread_safe_counter",
+    srcs = ["thread_safe_counter.py"],
+)
+
+cc_library(
+    name = "ready_callbacks_proxy",
+    hdrs = [
+        "ready_callbacks_proxy.hpp",
+    ],
+    deps = [
+        "//proxy/callbacks",
+    ],
+)

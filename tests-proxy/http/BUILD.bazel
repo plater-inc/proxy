@@ -1,0 +1,10 @@
+cc_test(
+    name = "header_container_test",
+    srcs = [
+        "header_container_test.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/http:header",
+    ],
+)

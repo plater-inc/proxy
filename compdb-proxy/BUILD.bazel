@@ -1,0 +1,25 @@
+load("@com_grail_bazel_compdb//:aspects.bzl", "compilation_database")
+load("@bzlws//:index.bzl", "bzlws_copy")
+
+compilation_database(
+    name = "compdb",
+    testonly = True,
+    targets = [
+        "//proxy/server:main",
+        "//tests-proxy/http:header_container_test",
+        "//tests-proxy/http_parser:request_pre_body_parser_test",
+        "//tests-proxy/server:switch_callbacks_proxy",
+        "//tests-proxy/server:tunnel_or_bump_callbacks_proxy",
+    ],
+)
+
+bzlws_copy(
+    name = "compdb_copy_compile_commands",
+    testonly = True,
+    srcs = [":compdb"],
+    out = "{FILENAME}",
+    substitutions = {
+        "@bzlws//info:execution_root": "__EXEC_ROOT__",
+    },
+    visibility = ["//visibility:private"],
+)

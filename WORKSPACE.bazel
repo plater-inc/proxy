@@ -1,0 +1,68 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+http_archive(
+    name = "com_grail_bazel_toolchain",
+    strip_prefix = "bazel-toolchain-master",
+    urls = ["https://github.com/grailbio/bazel-toolchain/archive/master.tar.gz"],
+)
+
+load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
+
+bazel_toolchain_dependencies()
+
+load("@com_grail_bazel_toolchain//toolchain:rules.bzl", "llvm_toolchain")
+
+llvm_toolchain(
+    name = "llvm_toolchain",
+    llvm_version = "12.0.0",
+)
+
+load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
+
+llvm_register_toolchains()
+
+http_archive(
+    name = "com_github_nelhage_rules_boost",
+    strip_prefix = "rules_boost-master",
+    urls = ["https://github.com/nelhage/rules_boost/archive/master.tar.gz"],
+)
+
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
+
+boost_deps()
+
+http_archive(
+    name = "bzlws",
+    sha256 = "5bebb821b158b11d81dd25cf031b5b26bae97dbb02025df7d0e41a262b3a030b",
+    strip_prefix = "bzlws-f929e5380f441f50a77776d34a7df8cacdbdf986",
+    url = "https://github.com/zaucy/bzlws/archive/f929e5380f441f50a77776d34a7df8cacdbdf986.zip",
+)
+
+load("@bzlws//:repo.bzl", "bzlws_deps")
+
+bzlws_deps()
+
+git_repository(
+    name = "bazel_compdb",
+    commit = "aa58494efdf31c3e3525832b3d44d48bb3bc2b0b",
+    remote = "git@github.com:grailbio/bazel-compilation-database.git",
+)
+
+http_archive(
+    name = "com_grail_bazel_compdb",
+    strip_prefix = "bazel-compilation-database-master",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/master.tar.gz"],
+)
+
+http_archive(
+    name = "com_github_gflags_gflags",
+    strip_prefix = "gflags-master",
+    urls = ["https://github.com/gflags/gflags/archive/master.tar.gz"],
+)
+
+http_archive(
+    name = "com_github_google_glog",
+    strip_prefix = "glog-master",
+    urls = ["https://github.com/google/glog/archive/master.tar.gz"],
+)

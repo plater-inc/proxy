@@ -1,0 +1,25 @@
+cc_library(
+    name = "callbacks",
+    hdrs = [
+        "callbacks.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/http:request_pre_body",
+        "//proxy/http:response_pre_body",
+        "//proxy/http:trailer",
+        "@boost//:asio_ssl",
+    ],
+)
+
+cc_library(
+    name = "utils",
+    srcs = ["utils.cpp"],
+    hdrs = [
+        "utils.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":callbacks",
+    ],
+)

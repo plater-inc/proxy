@@ -1,0 +1,28 @@
+cc_library(
+    name = "misc_strings",
+    srcs = [
+        "misc_strings.cpp",
+    ],
+    hdrs = [
+        "misc_strings.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:tuple",
+        "@boost//:utility",
+    ],
+)
+
+cc_library(
+    name = "utils",
+    srcs = [
+        "utils.cpp",
+    ],
+    hdrs = [
+        "utils.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:asio_ssl",
+    ],
+)

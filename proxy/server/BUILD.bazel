@@ -1,0 +1,95 @@
+cc_library(
+    name = "connection_manager",
+    srcs = [
+        "connection_manager.cpp",
+    ],
+    hdrs = [
+        "connection_manager.hpp",
+    ],
+    deps = [
+        ":connection_hpp",
+        "@boost//:noncopyable",
+        "@boost//:unordered",
+    ],
+)
+
+cc_library(
+    name = "connection_hpp",
+    hdrs = [
+        "connection.hpp",
+    ],
+    deps = [
+        ":reply",
+        "//proxy/callbacks",
+        "//proxy/http:body_length_representation",
+        "//proxy/http:request_pre_body",
+        "//proxy/http:response_pre_body",
+        "//proxy/http:trailer",
+        "//proxy/http_parser:body_with_length_parser",
+        "//proxy/http_parser:body_without_length_parser",
+        "//proxy/http_parser:request_pre_body_parser",
+        "//proxy/http_parser:response_pre_body_parser",
+        "@boost//:asio_ssl",
+        "@boost//:tribool",
+        "@boost//:tuple",
+    ],
+)
+
+cc_library(
+    name = "connection",
+    srcs = [
+        "connection.cpp",
+    ],
+    deps = [
+        ":connection_hpp",
+        ":connection_manager",
+        "//proxy/cert:certificate_generator",
+        "//proxy/http_parser:body_length_detector",
+        "//proxy/logging",
+        "//proxy/util:misc_strings",
+        "//proxy/util:utils",
+    ],
+)
+
+cc_library(
+    name = "reply",
+    srcs = [
+        "reply.cpp",
+    ],
+    hdrs = [
+        "reply.hpp",
+    ],
+    deps = [
+        "//proxy/http:header",
+        "//proxy/util:misc_strings",
+        "@boost//:asio_ssl",
+    ],
+)
+
+cc_library(
+    name = "server",
+    srcs = [
+        "server.cpp",
+    ],
+    hdrs = [
+        "server.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":connection",
+        ":connection_manager",
+        "@boost//:asio_ssl",
+    ],
+)
+
+cc_binary(
+    name = "main",
+    srcs = [
+        "main.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        ":server",
+        "//proxy/logging",
+    ],
+)

@@ -1,0 +1,125 @@
+cc_binary(
+    name = "tunnel_or_bump_callbacks_proxy",
+    srcs = [
+        "tunnel_or_bump_callbacks_proxy.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/logging",
+        "//proxy/server",
+        "//tests-proxy/test_util:ready_callbacks_proxy",
+    ],
+)
+
+cc_binary(
+    name = "switch_callbacks_proxy",
+    srcs = [
+        "switch_callbacks_proxy.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/callbacks:utils",
+        "//proxy/logging",
+        "//proxy/server",
+        "//proxy/util:utils",
+        "//tests-proxy/test_util:ready_callbacks_proxy",
+    ],
+)
+
+cc_binary(
+    name = "upstream_disconnnect_test_proxy",
+    srcs = [
+        "upstream_disconnnect_test_proxy.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/callbacks:utils",
+        "//proxy/logging",
+        "//proxy/server",
+        "//proxy/util:utils",
+        "//tests-proxy/test_util:ready_callbacks_proxy",
+    ],
+)
+
+py_test(
+    name = "example_com_urllib_tunnel_or_bump_test",
+    size = "small",
+    srcs = [
+        "example_com_urllib_tunnel_or_bump_test.py",
+    ],
+    data = [
+        ":tunnel_or_bump_callbacks_proxy",
+    ],
+    imports = [".."],
+    deps = [
+        "//tests-proxy/test_util:proxy",
+        "//tests-proxy/test_util:runner",
+    ],
+)
+
+py_test(
+    name = "example_com_http_client_tunnel_or_bump_test",
+    size = "small",
+    srcs = [
+        "example_com_http_client_tunnel_or_bump_test.py",
+    ],
+    data = [
+        ":tunnel_or_bump_callbacks_proxy",
+    ],
+    imports = [".."],
+    deps = [
+        "//tests-proxy/test_util:proxy",
+        "//tests-proxy/test_util:runner",
+    ],
+)
+
+py_test(
+    name = "http_1_0_server_http_client_behaviors_test",
+    size = "medium",
+    srcs = [
+        "http_1_0_server_http_client_behaviors_test.py",
+    ],
+    data = [
+        ":switch_callbacks_proxy",
+    ],
+    imports = [".."],
+    deps = [
+        "//tests-proxy/test_util:proxy",
+        "//tests-proxy/test_util:runner",
+        "//tests-proxy/test_util:thread_safe_counter",
+    ],
+)
+
+py_test(
+    name = "upstream_disconnnect_test",
+    size = "small",
+    srcs = [
+        "upstream_disconnnect_test.py",
+    ],
+    data = [
+        ":upstream_disconnnect_test_proxy",
+    ],
+    imports = [".."],
+    deps = [
+        "//tests-proxy/test_util:proxy",
+        "//tests-proxy/test_util:runner",
+        "//tests-proxy/test_util:thread_safe_counter",
+    ],
+)
+
+py_test(
+    name = "http_1_0_server_socket_client_100_continue_test",
+    size = "small",
+    srcs = [
+        "http_1_0_server_socket_client_100_continue_test.py",
+    ],
+    data = [
+        ":switch_callbacks_proxy",
+    ],
+    imports = [".."],
+    deps = [
+        "//tests-proxy/test_util:proxy",
+        "//tests-proxy/test_util:runner",
+        "//tests-proxy/test_util:thread_safe_counter",
+    ],
+)

@@ -1,0 +1,94 @@
+cc_library(
+    name = "body_length_representation",
+    hdrs = [
+        "body_length_representation.hpp",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "header",
+    srcs = [
+        "header.cpp",
+    ],
+    hdrs = [
+        "header.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proxy/util:misc_strings",
+    ],
+)
+
+cc_library(
+    name = "mime_types",
+    srcs = [
+        "mime_types.cpp",
+    ],
+    hdrs = [
+        "mime_types.hpp",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "chunk",
+    srcs = [
+        "chunk.cpp",
+    ],
+    hdrs = [
+        "chunk.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:asio_ssl",
+    ],
+)
+
+cc_library(
+    name = "request_pre_body",
+    srcs = ["request_pre_body.cpp"],
+    hdrs = [
+        "request_pre_body.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":body_length_representation",
+        ":header",
+        "//proxy/util:misc_strings",
+        "@boost//:asio_ssl",
+    ],
+)
+
+cc_library(
+    name = "response_pre_body",
+    srcs = [
+        "response_pre_body.cpp",
+    ],
+    hdrs = [
+        "response_pre_body.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":body_length_representation",
+        ":header",
+        "//proxy/util:misc_strings",
+        "@boost//:asio_ssl",
+    ],
+)
+
+cc_library(
+    name = "trailer",
+    srcs = [
+        "trailer.cpp",
+    ],
+    hdrs = [
+        "trailer.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":header",
+        "//proxy/util:misc_strings",
+        "@boost//:asio_ssl",
+    ],
+)

@@ -1,0 +1,13 @@
+cc_library(
+    name = "certificate_generator",
+    srcs = [
+        "certificate_generator.cpp",
+    ],
+    hdrs = [
+        "certificate_generator.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:asio_ssl",
+    ],
+)
