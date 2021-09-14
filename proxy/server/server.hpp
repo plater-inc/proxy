@@ -57,6 +57,8 @@ private:
   std::unordered_map<std::string, boost::tuple<std::string, std::string>>
       domain_certificates_{};
 
+  boost::asio::ssl::context upstream_ssl_context_;
+
   callbacks::proxy_callbacks &callbacks_;
 };
 

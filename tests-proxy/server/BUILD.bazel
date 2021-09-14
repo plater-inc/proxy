@@ -41,6 +41,19 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "benchmark_proxy",
+    srcs = [
+        "benchmark_proxy.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/logging",
+        "//proxy/server",
+        "//tests-proxy/test_util:ready_callbacks_proxy",
+    ],
+)
+
 py_test(
     name = "example_com_urllib_tunnel_or_bump_test",
     size = "small",
@@ -121,5 +134,20 @@ py_test(
         "//tests-proxy/test_util:proxy",
         "//tests-proxy/test_util:runner",
         "//tests-proxy/test_util:thread_safe_counter",
+    ],
+)
+
+py_binary(
+    name = "benchmark",
+    srcs = [
+        "benchmark.py",
+    ],
+    data = [
+        ":benchmark_proxy",
+    ],
+    imports = [".."],
+    deps = [
+        "//tests-proxy/test_util:proxy",
+        "//tests-proxy/test_util:runner",
     ],
 )

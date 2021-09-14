@@ -27,7 +27,9 @@ std::string read_file_from_disk(std::string file_name) {
 server::server(const std::string &address, const std::string &port,
                callbacks::proxy_callbacks &callbacks)
     : io_context_(), signals_(io_context_), acceptor_(io_context_),
-      connection_manager_(), new_connection_(), callbacks_(callbacks) {
+      connection_manager_(), new_connection_(),
+      upstream_ssl_context_(boost::asio::ssl::context::tlsv12),
+      callbacks_(callbacks) {
   // Register to handle the signals that indicate when the server should exit.
   // It is safe to register for the same signal multiple times in a program,
   // provided all registration for the specified signal is made through Asio.
@@ -48,12 +50,15 @@ server::server(const std::string &address, const std::string &port,
     write_file_to_disk("ca.pem", ca_certificate_);
   }
 
+  upstream_ssl_context_.set_default_verify_paths();
+
   // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
   resolver_.reset(new boost::asio::ip::tcp::resolver(io_context_));
   boost::asio::ip::tcp::endpoint endpoint =
       *resolver_->resolve(address, port).begin();
   acceptor_.open(endpoint.protocol());
   acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+  acceptor_.set_option(boost::asio::ip::tcp::no_delay(true));
   acceptor_.bind(endpoint);
   acceptor_.listen();
 
@@ -70,9 +75,10 @@ void server::run() {
 }
 
 void server::start_accept() {
-  new_connection_.reset(new connection(
-      io_context_, connection_manager_, resolver_, ca_private_key_,
-      ca_certificate_, domain_certificates_, connection_id_++, callbacks_));
+  new_connection_.reset(
+      new connection(io_context_, connection_manager_, resolver_,
+                     ca_private_key_, ca_certificate_, domain_certificates_,
+                     upstream_ssl_context_, connection_id_++, callbacks_));
   acceptor_.async_accept(new_connection_->downstream_socket(),
                          boost::bind(&server::handle_accept, this,
                                      boost::asio::placeholders::error));

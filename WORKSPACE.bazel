@@ -1,5 +1,4 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "com_grail_bazel_toolchain",
@@ -43,16 +42,10 @@ load("@bzlws//:repo.bzl", "bzlws_deps")
 
 bzlws_deps()
 
-git_repository(
-    name = "bazel_compdb",
-    commit = "aa58494efdf31c3e3525832b3d44d48bb3bc2b0b",
-    remote = "git@github.com:grailbio/bazel-compilation-database.git",
-)
-
 http_archive(
     name = "com_grail_bazel_compdb",
-    strip_prefix = "bazel-compilation-database-master",
-    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/master.tar.gz"],
+    strip_prefix = "bazel-compilation-database-0.5.0",
+    urls = ["https://github.com/grailbio/bazel-compilation-database/archive/0.5.0.tar.gz"],
 )
 
 http_archive(

@@ -21,6 +21,10 @@ bazel test --config debug --test_env=GLOG_logtostderr=1 --test_env=GLOG_v=11 tes
 The `GLOG_*` flags are optional and make the proxy log useful debugging information (only for debug builds).
 `--config debug` is optional too.
 
+To run benchmark:
+```
+bazel run -c opt tests-proxy/server:benchmark
+```
 
 To build tags (e.g. for VSCode):
 ```

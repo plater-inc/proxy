@@ -38,11 +38,6 @@ extern const char *FORMAT_INVERSE;
 
 #else // !DCHECK_IS_ON()
 
-#define DVLOG(verboselevel)                                                    \
-  static_cast<void>(0), (true || !VLOG_IS_ON(verboselevel))                    \
-                            ? (void)0                                          \
-                            : google::LogMessageVoidify() & LOG(INFO)
-
 #define DVLOG_IF(verboselevel, condition)                                      \
   static_cast<void>(0), (true || !VLOG_IS_ON(verboselevel) || !(condition))    \
                             ? (void)0                                          \
@@ -53,7 +48,7 @@ extern const char *FORMAT_INVERSE;
                             ? (void)0                                          \
                             : google::LogMessageVoidify() & LOG(INFO)
 
-#define DLOG_IF_EVERY_N(verboselevel, condition, n)                            \
+#define DVLOG_IF_EVERY_N(verboselevel, condition, n)                           \
   static_cast<void>(0), (true || !VLOG_IS_ON(verboselevel) || !(condition))    \
                             ? (void)0                                          \
                             : google::LogMessageVoidify() & LOG(INFO)

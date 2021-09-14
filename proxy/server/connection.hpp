@@ -112,6 +112,7 @@ public:
       const std::string &ca_private_key, const std::string &ca_certificate,
       std::unordered_map<std::string, boost::tuple<std::string, std::string>>
           &domain_certificates,
+      boost::asio::ssl::context &upstream_ssl_context,
       const callbacks::connection_id connection_id,
       callbacks::proxy_callbacks &callbacks);
 
@@ -208,7 +209,7 @@ private:
   /// Socket for the downstream connection.
   boost::asio::ip::tcp::socket upstream_socket_;
 
-  boost::asio::ssl::context upstream_ssl_context_;
+  boost::asio::ssl::context &upstream_ssl_context_;
 
   boost::shared_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>>
       upstream_ssl_socket_;

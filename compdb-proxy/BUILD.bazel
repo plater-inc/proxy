@@ -8,6 +8,7 @@ compilation_database(
         "//proxy/server:main",
         "//tests-proxy/http:header_container_test",
         "//tests-proxy/http_parser:request_pre_body_parser_test",
+        "//tests-proxy/server:benchmark_proxy",
         "//tests-proxy/server:switch_callbacks_proxy",
         "//tests-proxy/server:tunnel_or_bump_callbacks_proxy",
     ],

@@ -13,7 +13,6 @@
 namespace proxy {
 namespace server {
 
-// TODO: TCP_NODELAY for downstream
 // TODO: connections with port number in URL HTTP/HTTPS (with and without HSTS)
 // TODO: host passed to callbacks should be augmented with host header
 // TODO: HTTP 0.9?
@@ -30,18 +29,16 @@ connection::connection(
     const std::string &ca_private_key, const std::string &ca_certificate,
     std::unordered_map<std::string, boost::tuple<std::string, std::string>>
         &domain_certificates,
+    boost::asio::ssl::context &upstream_ssl_context,
     const callbacks::connection_id connection_id,
     callbacks::proxy_callbacks &callbacks)
     : downstream_socket_(io_context),
       downstream_ssl_context_(boost::asio::ssl::context::tlsv12),
-      upstream_socket_(io_context),
-      upstream_ssl_context_(boost::asio::ssl::context::tlsv12),
+      upstream_socket_(io_context), upstream_ssl_context_(upstream_ssl_context),
       connection_manager_(manager), resolver_(resolver),
       ca_private_key_(ca_private_key), ca_certificate_(ca_certificate),
       domain_certificates_(domain_certificates), connection_id_(connection_id),
-      callbacks_(callbacks) {
-  upstream_ssl_context_.set_default_verify_paths();
-}
+      callbacks_(callbacks) {}
 
 boost::asio::ip::tcp::socket &connection::downstream_socket() {
   return downstream_socket_;
@@ -271,7 +268,9 @@ void connection::handle_upstream_connect(
       upstream_ssl_socket_.reset(
           new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(
               upstream_socket_, upstream_ssl_context_));
-      upstream_ssl_socket_->set_verify_mode(boost::asio::ssl::verify_peer);
+      upstream_ssl_socket_->set_verify_mode(
+          boost::asio::ssl::verify_peer |
+          boost::asio::ssl::verify_fail_if_no_peer_cert);
       upstream_ssl_socket_->set_verify_callback(
           boost::asio::ssl::host_name_verification(upstream_connected_host_));
       SSL_set_tlsext_host_name(upstream_ssl_socket_->native_handle(),

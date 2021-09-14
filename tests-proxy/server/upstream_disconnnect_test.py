@@ -1,4 +1,3 @@
-import queue
 import test_util.proxy
 import test_util.runner
 import http.client
