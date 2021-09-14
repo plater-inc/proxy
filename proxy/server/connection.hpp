@@ -166,9 +166,6 @@ private:
 
   void finish_request();
 
-  bool verify_certificate(bool preverified,
-                          boost::asio::ssl::verify_context &ctx);
-
   /// Handle completion of a dowstream read operation.
   void handle_upstream_read(const boost::system::error_code &e,
                             std::size_t bytes_transferred);

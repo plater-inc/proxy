@@ -59,7 +59,7 @@ void getOpenSSLError() {
   BIO_free(bio);
 }
 
-int cert_add_ext(X509 *issuer, X509 *subject, int nid, char *value) {
+int cert_add_ext(X509 *issuer, X509 *subject, int nid, const char *value) {
   X509_EXTENSION *ex;
   X509V3_CTX ctx;
   /* No configuration database */

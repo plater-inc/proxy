@@ -13,7 +13,6 @@
 namespace proxy {
 namespace server {
 
-// TODO: implement 100 continue
 // TODO: TCP_NODELAY for downstream
 // TODO: connections with port number in URL HTTP/HTTPS (with and without HSTS)
 // TODO: host passed to callbacks should be augmented with host header
@@ -23,6 +22,7 @@ namespace server {
 // TODO: check if all boost functions are called nothrow (with error code param)
 // TODO: adjust TE header:
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/TE
+// TODO: https://pinning-test.badssl.com/ and https://revoked.badssl.com/
 
 connection::connection(
     boost::asio::io_context &io_context, connection_manager &manager,
@@ -39,7 +39,9 @@ connection::connection(
       connection_manager_(manager), resolver_(resolver),
       ca_private_key_(ca_private_key), ca_certificate_(ca_certificate),
       domain_certificates_(domain_certificates), connection_id_(connection_id),
-      callbacks_(callbacks) {}
+      callbacks_(callbacks) {
+  upstream_ssl_context_.set_default_verify_paths();
+}
 
 boost::asio::ip::tcp::socket &connection::downstream_socket() {
   return downstream_socket_;
@@ -271,8 +273,7 @@ void connection::handle_upstream_connect(
               upstream_socket_, upstream_ssl_context_));
       upstream_ssl_socket_->set_verify_mode(boost::asio::ssl::verify_peer);
       upstream_ssl_socket_->set_verify_callback(
-          boost::bind(&connection::verify_certificate, shared_from_this(),
-                      boost::placeholders::_1, boost::placeholders::_2));
+          boost::asio::ssl::host_name_verification(upstream_connected_host_));
       SSL_set_tlsext_host_name(upstream_ssl_socket_->native_handle(),
                                upstream_connected_host_.c_str());
 
@@ -299,24 +300,6 @@ void connection::handle_upstream_handshake(const boost::system::error_code &e) {
   } else if (e != boost::asio::error::operation_aborted) {
     connection_manager_stop();
   }
-}
-
-bool connection::verify_certificate(bool preverified,
-                                    boost::asio::ssl::verify_context &ctx) {
-  // The verify callback can be used to check whether the certificate that is
-  // being presented is valid for the peer. For example, RFC 2818 describes
-  // the steps involved in doing this for HTTPS. Consult the OpenSSL
-  // documentation for more details. Note that the callback is called once
-  // for each certificate in the certificate chain, starting from the root
-  // certificate authority.
-
-  // In this example we will simply print the certificate's subject name.
-  char subject_name[256];
-  X509 *cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-  X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-
-  // TODO verify
-  return true;
 }
 
 void connection::reset() {
