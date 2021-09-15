@@ -11,11 +11,11 @@ int main(int argc, char *argv[]) {
 
   // Check command line arguments.
   if (argc != 3) {
-    std::cerr << "Usage: bazel run proxy/server:main <address> <port>\n";
+    std::cerr << "Usage: bazel run proxy/server:demo <address> <port>\n";
     std::cerr << "  For IPv4, try:\n";
-    std::cerr << "    bazel run proxy/server:main 0.0.0.0 80\n";
+    std::cerr << "    bazel run proxy/server:demo 0.0.0.0 80\n";
     std::cerr << "  For IPv6, try:\n";
-    std::cerr << "    bazel run proxy/server:main 0::0 80\n";
+    std::cerr << "    bazel run proxy/server:demo 0::0 80\n";
     return 1;
   }
 

@@ -167,6 +167,8 @@ private:
 
   void finish_request();
 
+  void finish_request_callback(bool disconnect);
+
   /// Handle completion of a dowstream read operation.
   void handle_upstream_read(const boost::system::error_code &e,
                             std::size_t bytes_transferred);
@@ -318,6 +320,7 @@ private:
   std::string connect_connection_established_outgoing_line_{};
 
   bool connection_close_{};
+  bool upgrade_connection_to_tunnel_{};
 
   bool upstream_died_while_reading_from_it_{};
   bool stopped_{};

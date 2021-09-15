@@ -5,7 +5,7 @@ compilation_database(
     name = "compdb",
     testonly = True,
     targets = [
-        "//proxy/server:main",
+        "//proxy/server:demo",
         "//tests-proxy/http:header_container_test",
         "//tests-proxy/http_parser:request_pre_body_parser_test",
         "//tests-proxy/server:benchmark_proxy",

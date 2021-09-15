@@ -82,12 +82,12 @@ struct mix_callbacks_proxy : public tests_proxy::util::ready_callbacks_proxy {
   virtual void
   async_on_response_finished(proxy::callbacks::connection_id connection_id,
                              proxy::callbacks::request_id request_id,
-                             BOOST_ASIO_MOVE_ARG(boost::function<void()>)
+                             BOOST_ASIO_MOVE_ARG(boost::function<void(bool)>)
                                  callback) {
     debug_pipe_ << "response_finished\n" << std::flush;
     tests_proxy::util::ready_callbacks_proxy::async_on_response_finished(
         connection_id, request_id,
-        std::forward<boost::function<void()>>(callback));
+        std::forward<boost::function<void(bool)>>(callback));
   }
 
   virtual void

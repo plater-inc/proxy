@@ -59,8 +59,8 @@ void connection::stop() {
     DVLOG(1) << "stop(" << connection_id_ << ")\n";
 
     stopped_ = true;
-    if ((request_state_ != request_state::tunnel &&
-         request_state_ != request_state::pre_body) &&
+    if (request_state_ != request_state::tunnel &&
+        request_state_ != request_state::pre_body &&
         (request_state_ != request_state::finished ||
          (wrote_something_to_upstream_ &&
           response_state_ != response_state::finished))) {
@@ -302,7 +302,7 @@ void connection::handle_upstream_handshake(const boost::system::error_code &e) {
 }
 
 void connection::reset() {
-  connection_close_ = false;
+  upgrade_connection_to_tunnel_ = false;
 
   request_pre_body_ = {};
   response_pre_body_ = {};
@@ -351,19 +351,34 @@ void connection::handle_upstream_write(const boost::system::error_code &e) {
 }
 
 void connection::finish_request() {
-  callbacks::request_id request_id = request_id_;
-  reset();
   callbacks_.async_on_response_finished(
-      connection_id_, request_id,
-      boost::bind(
-          upstream_died_while_reading_from_it_ || connection_close_ ||
-                  (expect_body_continue_from_downstream_what_upstream_sent_ !=
-                       boost::indeterminate &&
-                   expect_body_continue_from_downstream_ !=
-                       expect_body_continue_from_downstream_what_upstream_sent_)
-              ? &connection::connection_manager_stop
-              : &connection::read_from_downstream,
-          shared_from_this()));
+      connection_id_, request_id_,
+      boost::bind(&connection::finish_request_callback, shared_from_this(),
+                  boost::placeholders::_1));
+}
+
+void connection::finish_request_callback(bool disconnect) {
+  bool upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_;
+  if (upstream_died_while_reading_from_it_ || connection_close_ ||
+      (expect_body_continue_from_downstream_what_upstream_sent_ !=
+           boost::indeterminate &&
+       expect_body_continue_from_downstream_ !=
+           expect_body_continue_from_downstream_what_upstream_sent_)) {
+    disconnect = true;
+  }
+  if (disconnect) {
+    connection_manager_stop();
+  } else {
+    reset();
+    if (upgrade_connection_to_tunnel) {
+      request_state_ = request_state::tunnel;
+      response_state_ = response_state::tunnel;
+      read_from_downstream();
+      read_from_upstream();
+    } else {
+      read_from_downstream();
+    }
+  }
 }
 
 void connection::handle_downstream_write(const boost::system::error_code &e) {
@@ -528,6 +543,7 @@ void connection::handle_upstream_read(const boost::system::error_code &e,
               .outgoing_downstream_buffers = outgoing_downstream_buffers_,
               .outgoing_downstream_buffers_strings =
                   outgoing_downstream_buffers_strings_,
+              .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
               .callback =
                   boost::bind(&connection::process_upstream_read_step_3_action,
                               shared_from_this())};
@@ -565,6 +581,9 @@ void connection::process_upstream_read_step_1_pre_body() {
                                         upstream_read_buffer_begin_,
                                         upstream_read_buffer_end_);
     if (result) {
+      if (response_pre_body_.code == "101") {
+        upgrade_connection_to_tunnel_ = true;
+      }
       if (response_pre_body_.code == "100") {
         expect_100_continue_from_upstream_ = false;
         response_pre_body_100_continue_.code = response_pre_body_.code;
@@ -597,6 +616,7 @@ void connection::process_upstream_read_step_1_pre_body() {
                 .outgoing_downstream_buffers = outgoing_downstream_buffers_,
                 .outgoing_downstream_buffers_strings =
                     outgoing_downstream_buffers_strings_,
+                .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
                 .callback =
                     boost::bind(&connection::process_upstream_read_step_2_body,
                                 shared_from_this(), boost::placeholders::_1)};
@@ -659,6 +679,7 @@ void connection::process_upstream_read_step_1_pre_body() {
                 .outgoing_downstream_buffers = outgoing_downstream_buffers_,
                 .outgoing_downstream_buffers_strings =
                     outgoing_downstream_buffers_strings_,
+                .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
                 .callback = boost::bind(
                     response_state_ == response_state::finished
                         ? &connection::process_upstream_read_step_2_no_body
@@ -702,6 +723,7 @@ void connection::process_upstream_read_step_2_no_body(bool send_immediately) {
           .outgoing_downstream_buffers = outgoing_downstream_buffers_,
           .outgoing_downstream_buffers_strings =
               outgoing_downstream_buffers_strings_,
+          .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
           .callback =
               boost::bind(&connection::process_upstream_read_step_3_action,
                           shared_from_this())};
@@ -762,6 +784,7 @@ void connection::process_upstream_read_step_2_body(bool send_immediately) {
             .outgoing_downstream_buffers = outgoing_downstream_buffers_,
             .outgoing_downstream_buffers_strings =
                 outgoing_downstream_buffers_strings_,
+            .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
             .callback =
                 boost::bind(&connection::process_upstream_read_step_3_action,
                             shared_from_this())};
@@ -795,12 +818,21 @@ void connection::handle_downstream_read(const boost::system::error_code &e,
                                         std::size_t bytes_transferred) {
   if (!e) {
     if (request_state_ == request_state::tunnel) {
-      boost::asio::async_write(
-          upstream_socket_,
-          boost::asio::const_buffer(&*downstream_read_buffer_.begin(),
-                                    bytes_transferred),
-          boost::bind(&connection::handle_upstream_write, shared_from_this(),
-                      boost::asio::placeholders::error));
+      if (bump_state_ == bump_state::established) {
+        boost::asio::async_write(
+            *upstream_ssl_socket_,
+            boost::asio::const_buffer(&*downstream_read_buffer_.begin(),
+                                      bytes_transferred),
+            boost::bind(&connection::handle_upstream_write, shared_from_this(),
+                        boost::asio::placeholders::error));
+      } else {
+        boost::asio::async_write(
+            upstream_socket_,
+            boost::asio::const_buffer(&*downstream_read_buffer_.begin(),
+                                      bytes_transferred),
+            boost::bind(&connection::handle_upstream_write, shared_from_this(),
+                        boost::asio::placeholders::error));
+      }
     } else {
       downstream_read_buffer_begin_ = downstream_read_buffer_.begin();
       downstream_read_buffer_end_ =
@@ -943,6 +975,7 @@ void connection::process_downstream_read_step_1_pre_body() {
                 .outgoing_upstream_buffers = outgoing_upstream_buffers_,
                 .outgoing_upstream_buffers_strings =
                     outgoing_upstream_buffers_strings_,
+                .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
                 .callback = boost::bind(
                     request_state_ == request_state::finished
                         ? &connection::process_downstream_read_step_2_no_body
@@ -1009,6 +1042,7 @@ void connection::process_downstream_read_step_2_no_body(bool send_immediately) {
           .outgoing_upstream_buffers = outgoing_upstream_buffers_,
           .outgoing_upstream_buffers_strings =
               outgoing_upstream_buffers_strings_,
+          .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
           .callback =
               boost::bind(&connection::process_downstream_read_step_3_action,
                           shared_from_this())};
@@ -1073,6 +1107,7 @@ void connection::process_downstream_read_step_2_body(bool send_immediately) {
             .outgoing_upstream_buffers = outgoing_upstream_buffers_,
             .outgoing_upstream_buffers_strings =
                 outgoing_upstream_buffers_strings_,
+            .upgrade_connection_to_tunnel = upgrade_connection_to_tunnel_,
             .callback =
                 boost::bind(&connection::process_downstream_read_step_3_action,
                             shared_from_this())};

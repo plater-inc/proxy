@@ -50,8 +50,17 @@ struct proxy_callbacks : private boost::noncopyable {
     std::string &host;
     http::request_pre_body &request_pre_body;
     http::response_pre_body &response_pre_body;
+
+    // This value determines if body will be read from the downstream after pre
+    // body is handled. It is default by true and it is used to potentially
+    // reject a body in the Expect: 100-continue flow.
     bool &expect_body_continue_from_downstream;
+
+    // Thus value determines if we expect upstream to send 100 Continue response
+    // before we will send it a body. It is prepopulated based on what request
+    // contains.
     bool &expect_100_continue_from_upstream;
+
     http::trailer &request_chunked_trailer;
     http::trailer &response_chunked_trailer;
 
@@ -64,6 +73,10 @@ struct proxy_callbacks : private boost::noncopyable {
     std::vector<boost::asio::const_buffer> &outgoing_upstream_buffers;
     std::vector<std::unique_ptr<std::string>>
         &outgoing_upstream_buffers_strings;
+
+    // This value determines if the connection will be upgraded to a tunnel
+    // after request/response finishes.
+    bool &upgrade_connection_to_tunnel;
 
     // Param to the callback is send_immediately - don't process body before
     // sending pre_body.
@@ -168,6 +181,11 @@ struct proxy_callbacks : private boost::noncopyable {
     std::vector<boost::asio::const_buffer> &outgoing_upstream_buffers;
     std::vector<std::unique_ptr<std::string>>
         &outgoing_upstream_buffers_strings;
+
+    // This value determines if the connection will be upgraded to a tunnel
+    // after request/response finishes.
+    bool &upgrade_connection_to_tunnel;
+
     BOOST_ASIO_MOVE_ARG(boost::function<void()>) callback;
   };
 
@@ -244,6 +262,12 @@ struct proxy_callbacks : private boost::noncopyable {
     std::string &host;
     http::request_pre_body &request_pre_body;
     http::response_pre_body &response_pre_body;
+
+    // This value determines if body will be read from the downstream after pre
+    // body is handled. It is used to potentially
+    // reject a body in the Expect: 100-continue flow.
+    // This value will be prepopulated based on what server returned (status
+    // code == 100).
     bool &expect_body_continue_from_downstream;
 
     // True if it is HEAD etc. so even though there is content length it doesn't
@@ -256,6 +280,11 @@ struct proxy_callbacks : private boost::noncopyable {
     std::vector<boost::asio::const_buffer> &outgoing_downstream_buffers;
     std::vector<std::unique_ptr<std::string>>
         &outgoing_downstream_buffers_strings;
+
+    // This value determines if the connection will be upgraded to a tunnel
+    // after request/response finishes. It will be prepopulated based on
+    // upstream response (status code == 101).
+    bool &upgrade_connection_to_tunnel;
 
     // Param to the callback is send_immediately - don't process body before
     // sending pre_body.
@@ -310,6 +339,11 @@ struct proxy_callbacks : private boost::noncopyable {
     std::vector<boost::asio::const_buffer> &outgoing_downstream_buffers;
     std::vector<std::unique_ptr<std::string>>
         &outgoing_downstream_buffers_strings;
+
+    // This value determines if the connection will be upgraded to a tunnel
+    // after request/response finishes.
+    bool &upgrade_connection_to_tunnel;
+
     BOOST_ASIO_MOVE_ARG(boost::function<void()>) callback;
   };
 
@@ -370,11 +404,13 @@ struct proxy_callbacks : private boost::noncopyable {
   // - if it finishes sucessfully or not
   // - if upstream was called or not
   // - if upstream or downstream terminated connection mid flight.
+  // Param callback value true means we want to force close the connection. Note
+  // that proxy may have to close connection in other scenarios too.
   virtual void
   async_on_response_finished(connection_id connection_id, request_id request_id,
-                             BOOST_ASIO_MOVE_ARG(boost::function<void()>)
+                             BOOST_ASIO_MOVE_ARG(boost::function<void(bool)>)
                                  callback) {
-    callback();
+    callback(false);
   }
 
   // There is nothing to be done after, so no async_ and no callback parameter.
