@@ -68,8 +68,6 @@ networksetup -setwebproxystate wi-fi off
 
 * The current implementation of the proxy is single threaded, but it should be possible and relatively easy to scale
 it to multiple threads. Pull requests welcomed!
-* The current implementation has a not very cleanly implemented certificate generator.
-Some work is needed to clean that file. Pull requests welcomed!
 * Tests are engineered to run in parallel (when they start a proxy they start it on a first free port,
 the same when they have to run a HTTP server), but they are generate ca.key and ca.pem files in a per test folder
 which could in theory cause problems if the same test is run simultaneously multiple times and one test reading a
