@@ -562,7 +562,8 @@ bool connection::is_connection_close(std::string &http_version_string,
                                      http::header_container &headers) {
   http::header_container::name_iterator connection_it =
       headers.find("connection");
-  return http_version_string != "HTTP/1.1" || connection_it->value == "close";
+  return http_version_string != "HTTP/1.1" ||
+         (connection_it != headers.end() && connection_it->value == "close");
 }
 
 void connection::process_upstream_read_step_1_pre_body() {

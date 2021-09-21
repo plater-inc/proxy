@@ -24,23 +24,21 @@ if __name__ == "__main__":
         def log_message(self, format, *args):
             return
 
-    server = http.server.HTTPServer(('localhost', 0), Server)
+    server = http.server.HTTPServer(("localhost", 0), Server)
     server_port = server.server_address[1]
     thread = threading.Thread(target=server.serve_forever)
     thread.daemon = True  # thread dies with the program
     thread.start()
 
-    queue, proxy_process = test_util.runner.run(
-        "./tests-proxy/server/benchmark_proxy")
+    queue, proxy_process = test_util.runner.run("./tests-proxy/server/benchmark_proxy")
 
     proxy_port = int(queue.get().strip())
 
     for outer_index in range(5):
-        iterations = 10**3
+        iterations = 10 ** 3
         start = time.time()
         for inner_index in range(iterations):
-            http_connection = http.client.HTTPConnection(
-                "127.0.0.1", proxy_port)
+            http_connection = http.client.HTTPConnection("127.0.0.1", proxy_port)
             http_connection.connect()
 
             url = "http://localhost:%d/abc/" % server_port
@@ -49,13 +47,14 @@ if __name__ == "__main__":
 
             http_connection.close()
 
-        print("Time per iteration with proxy: %f seconds" %
-              ((time.time() - start) / iterations))
+        print(
+            "Time per iteration with proxy: %f seconds"
+            % ((time.time() - start) / iterations)
+        )
 
         start = time.time()
         for inner_index in range(iterations):
-            http_connection = http.client.HTTPConnection(
-                "127.0.0.1", server_port)
+            http_connection = http.client.HTTPConnection("127.0.0.1", server_port)
             http_connection.connect()
 
             url = "/abc/"
@@ -64,7 +63,9 @@ if __name__ == "__main__":
 
             http_connection.close()
 
-        print("Time per iteration without proxy: %f seconds" %
-              ((time.time() - start) / iterations))
+        print(
+            "Time per iteration without proxy: %f seconds"
+            % ((time.time() - start) / iterations)
+        )
 
     proxy_process.kill()

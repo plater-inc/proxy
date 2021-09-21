@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # close it.
     class Server(http.server.BaseHTTPRequestHandler):
 
-        protocol_version = 'HTTP/1.1'
+        protocol_version = "HTTP/1.1"
 
         disable_nagle_algorithm = True
 
@@ -29,7 +29,7 @@ if __name__ == "__main__":
                 self.wfile.write(response)
                 self.close_connection = True
 
-    server = http.server.HTTPServer(('localhost', 0), Server)
+    server = http.server.HTTPServer(("localhost", 0), Server)
     server_port = server.server_address[1]
     thread = threading.Thread(target=server.serve_forever)
     thread.daemon = True  # thread dies with the program
@@ -45,29 +45,38 @@ if __name__ == "__main__":
         if suffix == "abc":
             expected_request_counter += 1
         test_util.runner.get_line_from_queue_and_assert(
-            queue, "request_pre_body /%s/\n" % suffix)
+            queue, "request_pre_body /%s/\n" % suffix
+        )
         test_util.runner.get_line_from_queue_and_assert(
-            queue, "request_body_some_last /%s/\n" % suffix)
+            queue, "request_body_some_last /%s/\n" % suffix
+        )
         if suffix == "abc":
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_pre_body /%s/\n" % suffix)
+                queue, "response_pre_body /%s/\n" % suffix
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_body_some_last /%s/\n" % suffix)
-        test_util.runner.get_line_from_queue_and_assert(queue,
-                                                        "response_finished\n")
+                queue, "response_body_some_last /%s/\n" % suffix
+            )
+        test_util.runner.get_line_from_queue_and_assert(queue, "response_finished\n")
 
         response = http_connection.getresponse()
         expected_body = b"<h1>%s</h1>" % str.encode(suffix)
         read_body = response.read()
-        assert read_body == expected_body, ("%s body %s doesn't match %s!" %
-                                            (url, read_body, expected_body))
+        assert read_body == expected_body, "%s body %s doesn't match %s!" % (
+            url,
+            read_body,
+            expected_body,
+        )
 
         assert expected_request_counter == request_counter.value(), (
             "Unexpected request_count - expected %d was %d",
-            expected_request_counter, request_counter.value())
+            expected_request_counter,
+            request_counter.value(),
+        )
 
     queue, proxy_process = test_util.runner.run(
-        "./tests-proxy/server/upstream_disconnnect_test_proxy")
+        "./tests-proxy/server/upstream_disconnnect_test_proxy"
+    )
 
     proxy_port = int(queue.get().strip())
 
@@ -85,7 +94,6 @@ if __name__ == "__main__":
 
     http_connection.close()
 
-    test_util.runner.get_line_from_queue_and_assert(queue,
-                                                    "connection_finished\n")
+    test_util.runner.get_line_from_queue_and_assert(queue, "connection_finished\n")
 
     proxy_process.kill()

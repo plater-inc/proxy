@@ -7,7 +7,8 @@ if __name__ == "__main__":
     for bump in [False, True]:
         queue, proxy_process = test_util.runner.run(
             "./tests-proxy/server/tunnel_or_bump_callbacks_proxy",
-            ["bump" if bump else "tunnel"])
+            ["bump" if bump else "tunnel"],
+        )
 
         proxy_port = int(queue.get().strip())
 
@@ -18,24 +19,30 @@ if __name__ == "__main__":
         for url in ["http://example.com", "http://example.com/"]:
             request = http_connection.request("GET", url)
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_pre_body /\n")
+                queue, "request_pre_body /\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_body_some_last /\n")
+                queue, "request_body_some_last /\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_pre_body / 200\n")
+                queue, "response_pre_body / 200\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_body_some_last /\n")
+                queue, "response_body_some_last /\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_finished\n")
+                queue, "response_finished\n"
+            )
 
             response = http_connection.getresponse()
             body_piece = b"<h1>Example Domain</h1>"
-            assert body_piece in response.read(), ("%s has no '%s' in body!" %
-                                                   (url, body_piece))
+            assert body_piece in response.read(), "%s has no '%s' in body!" % (
+                url,
+                body_piece,
+            )
 
         http_connection.close()
-        test_util.runner.get_line_from_queue_and_assert(
-            queue, "connection_finished\n")
+        test_util.runner.get_line_from_queue_and_assert(queue, "connection_finished\n")
 
         if bump:
             context = ssl.create_default_context()
@@ -45,8 +52,9 @@ if __name__ == "__main__":
         else:
             kwargs = {}
 
-        https_connection = http.client.HTTPSConnection("127.0.0.1", proxy_port,
-                                                       **kwargs)
+        https_connection = http.client.HTTPSConnection(
+            "127.0.0.1", proxy_port, **kwargs
+        )
         # We cannot call https_connection.connect() here as it would try
         # talking SSL instead of plain HTTP - we have to tell it about tunnel
         # first.
@@ -54,32 +62,40 @@ if __name__ == "__main__":
         https_connection.request("GET", "/")
         test_util.runner.get_line_from_queue_and_assert(queue, "connection\n")
         test_util.runner.get_line_from_queue_and_assert(
-            queue, "connect example.com 443\n")
+            queue, "connect example.com 443\n"
+        )
 
         if bump:
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_pre_body /\n")
+                queue, "request_pre_body /\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_body_some_last /\n")
+                queue, "request_body_some_last /\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_pre_body / 200\n")
+                queue, "response_pre_body / 200\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_body_some_last /\n")
+                queue, "response_body_some_last /\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_finished\n")
+                queue, "response_finished\n"
+            )
 
         response = https_connection.getresponse()
         body_piece = b"<h1>Example Domain</h1>"
-        assert body_piece in response.read(), ("%s has no '%s' in body!" %
-                                               (url, body_piece))
+        assert body_piece in response.read(), "%s has no '%s' in body!" % (
+            url,
+            body_piece,
+        )
 
         https_connection.close()
-        test_util.runner.get_line_from_queue_and_assert(
-            queue, "connection_finished\n")
+        test_util.runner.get_line_from_queue_and_assert(queue, "connection_finished\n")
 
         # Let's test some redirects
-        https_connection = http.client.HTTPSConnection("127.0.0.1", proxy_port,
-                                                       **kwargs)
+        https_connection = http.client.HTTPSConnection(
+            "127.0.0.1", proxy_port, **kwargs
+        )
 
         # We cannot call https_connection.connect() here as it would try
         # talking SSL instead of plain HTTP - we have to tell it about tunnel
@@ -90,58 +106,72 @@ if __name__ == "__main__":
             "GET",
             url,
             headers={
-                "User-Agent":
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4298.0 Safari/537.36",
-            })
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4298.0 Safari/537.36",
+            },
+        )
         test_util.runner.get_line_from_queue_and_assert(queue, "connection\n")
         test_util.runner.get_line_from_queue_and_assert(
-            queue, "connect www.iana.org 443\n")
+            queue, "connect www.iana.org 443\n"
+        )
 
         if bump:
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_pre_body /domains/example\n")
+                queue, "request_pre_body /domains/example\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_body_some_last /domains/example\n")
+                queue, "request_body_some_last /domains/example\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_pre_body /domains/example 301\n")
+                queue, "response_pre_body /domains/example 301\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_body_some_last /domains/example\n")
+                queue, "response_body_some_last /domains/example\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_finished\n")
+                queue, "response_finished\n"
+            )
 
         response = https_connection.getresponse()
         body_piece = b"<h1>Moved Permanently</h1>"
-        assert body_piece in response.read(), ("%s has no '%s' in body!" %
-                                               (url, body_piece))
+        assert body_piece in response.read(), "%s has no '%s' in body!" % (
+            url,
+            body_piece,
+        )
 
         url = "/domains/reserved"
         https_connection.request(
             "GET",
             url,
             headers={
-                "User-Agent":
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4298.0 Safari/537.36",
-            })
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4298.0 Safari/537.36",
+            },
+        )
 
         if bump:
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_pre_body /domains/reserved\n")
+                queue, "request_pre_body /domains/reserved\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "request_body_some_last /domains/reserved\n")
+                queue, "request_body_some_last /domains/reserved\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_pre_body /domains/reserved 200\n")
+                queue, "response_pre_body /domains/reserved 200\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_body_some_last /domains/reserved\n")
+                queue, "response_body_some_last /domains/reserved\n"
+            )
             test_util.runner.get_line_from_queue_and_assert(
-                queue, "response_finished\n")
+                queue, "response_finished\n"
+            )
 
         response = https_connection.getresponse()
         body_piece = b"<h1>IANA-managed Reserved Domains</h1>"
-        assert body_piece in response.read(), ("%s has no '%s' in body!" %
-                                               (url, body_piece))
+        assert body_piece in response.read(), "%s has no '%s' in body!" % (
+            url,
+            body_piece,
+        )
 
         https_connection.close()
-        test_util.runner.get_line_from_queue_and_assert(
-            queue, "connection_finished\n")
+        test_util.runner.get_line_from_queue_and_assert(queue, "connection_finished\n")
 
         proxy_process.kill()
