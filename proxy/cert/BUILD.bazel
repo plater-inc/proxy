@@ -8,6 +8,36 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":rsa_maker",
+        "@boost//:asio_ssl",
+        "@boost//:noncopyable",
+    ],
+)
+
+cc_library(
+    name = "rsa_maker",
+    srcs = [
+        "rsa_maker.cpp",
+    ],
+    hdrs = [
+        "rsa_maker.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":rsa",
+        "@boost//:noncopyable",
+    ],
+)
+
+cc_library(
+    name = "rsa",
+    srcs = [
+        "rsa.cpp",
+    ],
+    hdrs = [
+        "rsa.hpp",
+    ],
+    deps = [
         "@boost//:asio_ssl",
     ],
 )

@@ -1,6 +1,5 @@
 #include "connection.hpp"
 #include "connection_manager.hpp"
-#include "proxy/cert/certificate_generator.hpp"
 #include "proxy/http_parser/body_length_detector.hpp"
 #include "proxy/logging/logging.hpp"
 #include "proxy/util/misc_strings.hpp"
@@ -31,6 +30,9 @@ connection::connection(
         &domain_certificates,
     boost::asio::ssl::context &upstream_ssl_context,
     const callbacks::connection_id connection_id,
+    cert::certificate_generator &certificate_generator,
+    cert::rsa_maker::reschedule rsa_maker_reschedule,
+    boost::function<void()> rsa_maker_bump,
     callbacks::proxy_callbacks &callbacks)
     : downstream_socket_(io_context),
       downstream_ssl_context_(boost::asio::ssl::context::tlsv12),
@@ -38,7 +40,9 @@ connection::connection(
       connection_manager_(manager), resolver_(resolver),
       ca_private_key_(ca_private_key), ca_certificate_(ca_certificate),
       domain_certificates_(domain_certificates), connection_id_(connection_id),
-      callbacks_(callbacks) {}
+      certificate_generator_(certificate_generator),
+      rsa_maker_reschedule_(rsa_maker_reschedule),
+      rsa_maker_bump_(rsa_maker_bump), callbacks_(callbacks) {}
 
 boost::asio::ip::tcp::socket &connection::downstream_socket() {
   return downstream_socket_;
@@ -171,7 +175,6 @@ void connection::handle_upstream_resolve(
     boost::asio::ip::tcp::resolver::iterator endpoint_iterator) {
   if (!e) {
     upstream_connect(endpoint_iterator);
-
   } else if (e != boost::asio::error::operation_aborted) {
     connection_manager_stop();
   }
@@ -388,8 +391,11 @@ void connection::handle_downstream_write(const boost::system::error_code &e) {
       boost::tie(private_key_, certificate_) =
           domain_certificates_[upstream_requested_host_];
       if (private_key_ == "" || certificate_ == "") {
-        boost::tie(private_key_, certificate_) = cert::generate_certificate(
-            upstream_requested_host_, ca_private_key_, ca_certificate_);
+        boost::tie(private_key_, certificate_) =
+            certificate_generator_.generate_certificate(
+                upstream_requested_host_, ca_private_key_, ca_certificate_,
+                std::forward<cert::rsa_maker::reschedule>(
+                    rsa_maker_reschedule_));
         // Create chain
         certificate_ += ca_certificate_;
         domain_certificates_[upstream_requested_host_] =
@@ -818,6 +824,7 @@ void connection::process_upstream_read_step_3_action() {
 void connection::handle_downstream_read(const boost::system::error_code &e,
                                         std::size_t bytes_transferred) {
   if (!e) {
+    rsa_maker_bump_();
     if (request_state_ == request_state::tunnel) {
       if (bump_state_ == bump_state::established) {
         boost::asio::async_write(

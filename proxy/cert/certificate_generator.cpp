@@ -1,22 +1,23 @@
 #include "certificate_generator.hpp"
-#include <tuple>
+#include <boost/asio/ssl.hpp>
 
 namespace proxy {
 namespace cert {
 
-using X509_ptr = std::unique_ptr<X509, decltype(&X509_free)>;
-using BIO_MEM_ptr = std::unique_ptr<BIO, decltype(&BIO_free)>;
-using EVP_PKEY_ptr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
-using BIGNUM_ptr = std::unique_ptr<BIGNUM, decltype(&BN_free)>;
-using X509_ex_ptr =
-    std::unique_ptr<X509_EXTENSION, decltype(&X509_EXTENSION_free)>;
-using RSA_ptr = std::unique_ptr<RSA, decltype(&RSA_free)>;
-using ASN1_IA5STRING_ptr =
-    std::unique_ptr<ASN1_IA5STRING, decltype(&ASN1_IA5STRING_free)>;
-using GENERAL_NAME_ptr =
-    std::unique_ptr<GENERAL_NAME, decltype(&GENERAL_NAME_free)>;
-using GENERAL_NAMES_ptr =
-    std::unique_ptr<GENERAL_NAMES, decltype(&GENERAL_NAMES_free)>;
+typedef std::unique_ptr<X509, decltype(&X509_free)> X509_ptr;
+typedef std::unique_ptr<BIO, decltype(&BIO_free)> BIO_MEM_ptr;
+typedef std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> EVP_PKEY_ptr;
+typedef std::unique_ptr<X509_EXTENSION, decltype(&X509_EXTENSION_free)>
+    X509_ex_ptr;
+typedef std::unique_ptr<ASN1_IA5STRING, decltype(&ASN1_IA5STRING_free)>
+    ASN1_IA5STRING_ptr;
+typedef std::unique_ptr<GENERAL_NAME, decltype(&GENERAL_NAME_free)>
+    GENERAL_NAME_ptr;
+typedef std::unique_ptr<GENERAL_NAMES, decltype(&GENERAL_NAMES_free)>
+    GENERAL_NAMES_ptr;
+
+certificate_generator::certificate_generator(rsa_maker &rsa_maker)
+    : rsa_maker_(rsa_maker) {}
 
 int add_extension(X509V3_CTX &ctx, X509 *subject, int nid, const char *value) {
   X509_ex_ptr ex(X509V3_EXT_nconf_nid(nullptr, &ctx, nid, value),
@@ -30,7 +31,8 @@ int add_extension(X509V3_CTX &ctx, X509 *subject, int nid, const char *value) {
   return 1;
 }
 
-boost::tuple<std::string, std::string> generate_root_certificate() {
+boost::tuple<std::string, std::string>
+certificate_generator::generate_root_certificate() {
   EVP_PKEY_ptr private_key(EVP_PKEY_new(), EVP_PKEY_free);
   if (!private_key) {
     return boost::make_tuple("", "");
@@ -40,18 +42,8 @@ boost::tuple<std::string, std::string> generate_root_certificate() {
     return boost::make_tuple("", "");
   }
 
-  BIGNUM_ptr bn(BN_new(), BN_free);
-  if (!bn) {
-    return boost::make_tuple("", "");
-  }
-  if (!BN_set_word(bn.get(), RSA_F4)) {
-    return boost::make_tuple("", "");
-  }
-  RSA_ptr rsa(RSA_new(), RSA_free);
+  RSA_ptr rsa = generate_rsa();
   if (!rsa) {
-    return boost::make_tuple("", "");
-  }
-  if (!RSA_generate_key_ex(rsa.get(), 2048, bn.get(), nullptr)) {
     return boost::make_tuple("", "");
   }
   if (!EVP_PKEY_assign_RSA(private_key.get(),
@@ -135,8 +127,10 @@ boost::tuple<std::string, std::string> generate_root_certificate() {
 }
 
 boost::tuple<std::string, std::string>
-generate_certificate(std::string host, std::string root_private_key,
-                     std::string root_cert) {
+certificate_generator::generate_certificate(std::string host,
+                                            std::string root_private_key,
+                                            std::string root_cert,
+                                            rsa_maker::reschedule reschedule) {
   BIO_MEM_ptr bio_root(BIO_new(BIO_s_mem()), BIO_free);
   if (!bio_root) {
     return boost::make_tuple("", "");
@@ -177,18 +171,8 @@ generate_certificate(std::string host, std::string root_private_key,
     return boost::make_tuple("", "");
   }
 
-  BIGNUM_ptr bn(BN_new(), BN_free);
-  if (!bn) {
-    return boost::make_tuple("", "");
-  }
-  if (!BN_set_word(bn.get(), RSA_F4)) {
-    return boost::make_tuple("", "");
-  }
-  RSA_ptr rsa(RSA_new(), RSA_free);
+  RSA_ptr rsa = rsa_maker_.get(std::forward<rsa_maker::reschedule>(reschedule));
   if (!rsa) {
-    return boost::make_tuple("", "");
-  }
-  if (!RSA_generate_key_ex(rsa.get(), 2048, bn.get(), nullptr)) {
     return boost::make_tuple("", "");
   }
   if (!EVP_PKEY_assign_RSA(private_key.get(),

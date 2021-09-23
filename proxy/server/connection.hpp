@@ -2,6 +2,7 @@
 #define PROXY_SERVER_CONNECTION_HPP
 
 #include "proxy/callbacks/callbacks.hpp"
+#include "proxy/cert/certificate_generator.hpp"
 #include "proxy/http/body_length_representation.hpp"
 #include "proxy/http/chunk.hpp"
 #include "proxy/http/request_pre_body.hpp"
@@ -114,6 +115,9 @@ public:
           &domain_certificates,
       boost::asio::ssl::context &upstream_ssl_context,
       const callbacks::connection_id connection_id,
+      cert::certificate_generator &certificate_generator,
+      cert::rsa_maker::reschedule rsa_maker_reschedule,
+      boost::function<void()> rsa_maker_bump,
       callbacks::proxy_callbacks &callbacks);
 
   /// Get the socket associated with the connection.
@@ -340,6 +344,12 @@ private:
 
   // Unique (per connection_id_) identifier for request.
   callbacks::request_id request_id_{};
+
+  cert::certificate_generator &certificate_generator_;
+
+  cert::rsa_maker::reschedule rsa_maker_reschedule_;
+
+  boost::function<void()> rsa_maker_bump_;
 
   callbacks::proxy_callbacks &callbacks_;
 };

@@ -21,6 +21,7 @@ cc_library(
     deps = [
         ":reply",
         "//proxy/callbacks",
+        "//proxy/cert:certificate_generator",
         "//proxy/http:body_length_representation",
         "//proxy/http:request_pre_body",
         "//proxy/http:response_pre_body",
@@ -43,7 +44,6 @@ cc_library(
     deps = [
         ":connection_hpp",
         ":connection_manager",
-        "//proxy/cert:certificate_generator",
         "//proxy/http_parser:body_length_detector",
         "//proxy/logging",
         "//proxy/util:misc_strings",
@@ -78,6 +78,8 @@ cc_library(
     deps = [
         ":connection",
         ":connection_manager",
+        "//proxy/cert:certificate_generator",
+        "//proxy/cert:rsa_maker",
         "@boost//:asio_ssl",
     ],
 )

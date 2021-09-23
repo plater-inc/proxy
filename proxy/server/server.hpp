@@ -4,6 +4,8 @@
 #include "connection.hpp"
 #include "connection_manager.hpp"
 #include "proxy/callbacks/callbacks.hpp"
+#include "proxy/cert/certificate_generator.hpp"
+#include "proxy/cert/rsa_maker.hpp"
 #include <boost/asio.hpp>
 #include <boost/noncopyable.hpp>
 #include <string>
@@ -33,6 +35,12 @@ private:
   /// Handle a request to stop the server.
   void handle_stop();
 
+  void rsa_maker_reschedule();
+
+  void handle_rsa_maker_timer(const boost::system::error_code &e);
+
+  void rsa_maker_bump();
+
   /// The io_context used to perform asynchronous operations.
   boost::asio::io_context io_context_;
 
@@ -60,6 +68,12 @@ private:
   boost::asio::ssl::context upstream_ssl_context_;
 
   callbacks::proxy_callbacks &callbacks_;
+
+  cert::rsa_maker rsa_maker_{};
+  cert::certificate_generator certificate_generator_{rsa_maker_};
+  int rsa_maker_counter_{1};
+  bool stopped_{};
+  boost::asio::deadline_timer rsa_maker_timer_;
 };
 
 } // namespace server
