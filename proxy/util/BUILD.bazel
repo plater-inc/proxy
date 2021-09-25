@@ -26,3 +26,18 @@ cc_library(
         "@boost//:asio_ssl",
     ],
 )
+
+cc_library(
+    name = "urls",
+    srcs = [
+        "urls.cpp",
+    ],
+    hdrs = [
+        "urls.hpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@boost//:algorithm",
+        "@boost//:tuple",
+    ],
+)

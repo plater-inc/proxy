@@ -47,6 +47,7 @@ cc_library(
         "//proxy/http_parser:body_length_detector",
         "//proxy/logging",
         "//proxy/util:misc_strings",
+        "//proxy/util:urls",
         "//proxy/util:utils",
     ],
 )

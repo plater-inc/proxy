@@ -3,6 +3,7 @@
 #include "proxy/http_parser/body_length_detector.hpp"
 #include "proxy/logging/logging.hpp"
 #include "proxy/util/misc_strings.hpp"
+#include "proxy/util/urls.hpp"
 #include "proxy/util/utils.hpp"
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
@@ -92,44 +93,17 @@ void connection::shutdown() {
 
 [[nodiscard]] boost::tuple<bool, std::string, std::string>
 connection::extract_host_and_fix_request() {
-  int index_start = -1;
-  int count = 0;
-  int slash_count = 0;
-  for (int i = 0; i < request_pre_body_.uri.length(); i++) {
-    if (request_pre_body_.uri[i] == '/') {
-      slash_count++;
-    } else {
-      if (slash_count == 2) {
-        if (index_start == -1) {
-          index_start = i;
-        }
-        count++;
-      } else if (slash_count == 3) {
-        break;
-      }
-    }
-  }
-
-  if (index_start == -1 || count == 0 || slash_count < 2) {
+  bool success;
+  bool is_ssl;
+  std::string upstream_host;
+  std::string upstream_port;
+  std::string path;
+  boost::tie(success, is_ssl, upstream_host, upstream_port, path) =
+      util::extract_url_parts(request_pre_body_.uri);
+  if (!success) {
     return boost::make_tuple(false, "" /* ignored */, "" /* ignored */);
   }
-
-  std::string upstream_host_port =
-      request_pre_body_.uri.substr(index_start, count);
-  std::vector<std::string> host_port_parts;
-  boost::split(host_port_parts, upstream_host_port, boost::is_any_of(":"));
-  // We check for count == 0 before, so here we know the vector will not be
-  // empty.
-  std::string upstream_host = host_port_parts[0];
-  std::string upstream_port =
-      host_port_parts.size() == 1 ? "80" : host_port_parts[1];
-
-  if (slash_count == 2) {
-    // Python urllib sends http://example.com without trailing slash
-    request_pre_body_.uri = "/";
-  } else {
-    request_pre_body_.uri = request_pre_body_.uri.substr(index_start + count);
-  }
+  request_pre_body_.uri = path;
 
   http::header_container::name_iterator proxy_connection_it =
       request_pre_body_.headers.find("proxy-connection");

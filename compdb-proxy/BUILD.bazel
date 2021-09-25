@@ -11,6 +11,7 @@ compilation_database(
         "//tests-proxy/server:benchmark_proxy",
         "//tests-proxy/server:switch_callbacks_proxy",
         "//tests-proxy/server:tunnel_or_bump_callbacks_proxy",
+        "//tests-proxy/util:urls_test",
     ],
 )
 

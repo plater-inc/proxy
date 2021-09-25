@@ -1,0 +1,10 @@
+cc_test(
+    name = "urls_test",
+    srcs = [
+        "urls_test.cpp",
+    ],
+    visibility = ["//compdb-proxy:__pkg__"],
+    deps = [
+        "//proxy/util:urls",
+    ],
+)
