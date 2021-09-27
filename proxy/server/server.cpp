@@ -1,5 +1,6 @@
 #include "server.hpp"
 #include "proxy/cert/certificate_generator.hpp"
+#include "proxy/logging/logging.hpp"
 #include <boost/bind/bind.hpp>
 #include <fstream>
 #include <signal.h>
@@ -75,7 +76,14 @@ void server::run() {
   // have finished. While the server is running, there is always at least one
   // asynchronous operation outstanding: the asynchronous accept call waiting
   // for new incoming connections.
-  io_context_.run();
+  for (;;) {
+    try {
+      io_context_.run();
+      break; // run() exited normally
+    } catch (...) {
+      DLOG(ERROR) << "Restarting io_context.run() due to exception.";
+    }
+  }
 }
 
 void server::rsa_maker_reschedule() {

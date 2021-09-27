@@ -81,6 +81,7 @@ cc_library(
         ":connection_manager",
         "//proxy/cert:certificate_generator",
         "//proxy/cert:rsa_maker",
+        "//proxy/logging",
         "@boost//:asio_ssl",
     ],
 )
